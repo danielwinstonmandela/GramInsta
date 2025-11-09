@@ -86,7 +86,7 @@ export default class StoryDetailPage {
       }
     }
 
-    this.#presenter.showSaveButton();
+    await this.#presenter.showSaveButton();
     this.addNotifyMeEventListener();
   }
 
