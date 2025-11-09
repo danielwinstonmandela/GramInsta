@@ -1,0 +1,9 @@
+{
+  "projects": {
+    "default": "graminsta-f3e60",
+    "citycare": "citycare-app-f1a5f",
+    "graminsta": "graminsta-f3e60"
+  },
+  "targets": {},
+  "etags": {}
+}
