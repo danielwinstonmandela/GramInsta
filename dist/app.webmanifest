@@ -1,0 +1,69 @@
+{
+  "id": "/?source=pwa#/",
+  "scope": "/",
+  "start_url": "/?source=pwa#/",
+  "name": "Graminsta - Share Your Stories with Location",
+  "short_name": "Graminsta",
+  "description": "Basically an Instagram clone called Gram-Insta hehe (specifically for posting stories with location tho!). Share your moments with the world and explore stories from different locations.",
+  "display": "standalone",
+  "background_color": "#FFFFFF",
+  "theme_color": "#4F46E5",
+  "icons": [
+    {
+      "src": "images/logo.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any"
+    },
+    {
+      "src": "images/logo.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "images/placeholder-image.jpg",
+      "sizes": "1920x1080",
+      "type": "image/jpeg",
+      "form_factor": "wide",
+      "label": "Home screen showing all stories"
+    },
+    {
+      "src": "images/placeholder-image.jpg",
+      "sizes": "1080x1920",
+      "type": "image/jpeg",
+      "form_factor": "narrow",
+      "label": "Mobile view of stories"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "New Story",
+      "short_name": "New",
+      "description": "Create a new story post",
+      "url": "/?source=pwa#/new",
+      "icons": [
+        {
+          "src": "images/logo.png",
+          "type": "image/png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Saved Stories",
+      "short_name": "Saved",
+      "description": "View your saved stories",
+      "url": "/?source=pwa#/bookmark",
+      "icons": [
+        {
+          "src": "images/logo.png",
+          "type": "image/png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ]
+}
