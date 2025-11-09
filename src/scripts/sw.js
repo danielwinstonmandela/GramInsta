@@ -200,3 +200,150 @@ self.addEventListener('notificationclick', (event) => {
 
   event.waitUntil(promiseChain);
 });
+
+// Background Sync - Sync pending stories when online
+self.addEventListener('sync', (event) => {
+  console.log('[Service Worker] Background sync event:', event.tag);
+
+  if (event.tag === 'sync-stories') {
+    event.waitUntil(syncPendingStories());
+  }
+});
+
+async function syncPendingStories() {
+  console.log('[Service Worker] Starting to sync pending stories...');
+
+  try {
+    // Open IndexedDB directly
+    const dbRequest = indexedDB.open('graminsta', 2);
+    
+    const db = await new Promise((resolve, reject) => {
+      dbRequest.onsuccess = () => resolve(dbRequest.result);
+      dbRequest.onerror = () => reject(dbRequest.error);
+    });
+
+    const transaction = db.transaction(['pending-stories'], 'readonly');
+    const store = transaction.objectStore('pending-stories');
+    const index = store.index('status');
+    const request = index.getAll('pending');
+
+    const pendingStories = await new Promise((resolve, reject) => {
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+
+    console.log(`[Service Worker] Found ${pendingStories.length} pending stories to sync`);
+
+    if (pendingStories.length === 0) {
+      db.close();
+      return;
+    }
+
+    // Get auth token from stored data
+    const accessToken = await getStoredAccessToken();
+    if (!accessToken) {
+      console.error('[Service Worker] No access token found, cannot sync');
+      db.close();
+      return;
+    }
+
+    const syncResults = [];
+
+    for (const pendingStory of pendingStories) {
+      try {
+        // Create FormData for API submission
+        const formData = new FormData();
+        formData.append('description', pendingStory.description);
+        
+        // Convert base64 photo back to blob if needed
+        if (pendingStory.photoData) {
+          const blob = await fetch(pendingStory.photoData).then(r => r.blob());
+          formData.append('photo', blob, 'photo.jpg');
+        }
+        
+        if (pendingStory.lat) formData.append('lat', pendingStory.lat);
+        if (pendingStory.lon) formData.append('lon', pendingStory.lon);
+
+        // Send to API
+        const response = await fetch('https://story-api.dicoding.dev/v1/stories', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+          },
+          body: formData,
+        });
+
+        if (response.ok) {
+          // Mark as synced
+          const updateTransaction = db.transaction(['pending-stories'], 'readwrite');
+          const updateStore = updateTransaction.objectStore('pending-stories');
+          const getRequest = updateStore.get(pendingStory._tempId);
+
+          await new Promise((resolve, reject) => {
+            getRequest.onsuccess = () => {
+              const story = getRequest.result;
+              if (story) {
+                story.status = 'synced';
+                story.syncedAt = new Date().toISOString();
+                const putRequest = updateStore.put(story);
+                putRequest.onsuccess = () => resolve();
+                putRequest.onerror = () => reject(putRequest.error);
+              } else {
+                resolve();
+              }
+            };
+            getRequest.onerror = () => reject(getRequest.error);
+          });
+
+          syncResults.push({ success: true, tempId: pendingStory._tempId });
+          console.log(`[Service Worker] Successfully synced story ${pendingStory._tempId}`);
+        } else {
+          syncResults.push({ success: false, tempId: pendingStory._tempId });
+          console.error(`[Service Worker] Failed to sync story ${pendingStory._tempId}`);
+        }
+      } catch (error) {
+        console.error('[Service Worker] Error syncing story:', error);
+        syncResults.push({ success: false, tempId: pendingStory._tempId, error: error.message });
+      }
+    }
+
+    db.close();
+
+    // Show notification about sync results
+    const successCount = syncResults.filter(r => r.success).length;
+    if (successCount > 0) {
+      await self.registration.showNotification('Graminsta - Sync Complete', {
+        body: `Successfully synced ${successCount} story(ies) from offline queue.`,
+        icon: '/images/logo.png',
+        badge: '/favicon.png',
+        tag: 'sync-complete',
+      });
+    }
+
+    console.log('[Service Worker] Sync completed:', syncResults);
+  } catch (error) {
+    console.error('[Service Worker] Sync failed:', error);
+    throw error; // Re-throw to retry sync later
+  }
+}
+
+async function getStoredAccessToken() {
+  try {
+    // Try to get from IndexedDB or localStorage through clients
+    const clients = await self.clients.matchAll();
+    if (clients.length > 0) {
+      // Send message to client to get token
+      return new Promise((resolve) => {
+        const messageChannel = new MessageChannel();
+        messageChannel.port1.onmessage = (event) => {
+          resolve(event.data.token);
+        };
+        clients[0].postMessage({ type: 'GET_TOKEN' }, [messageChannel.port2]);
+      });
+    }
+    return null;
+  } catch (error) {
+    console.error('[Service Worker] Error getting token:', error);
+    return null;
+  }
+}

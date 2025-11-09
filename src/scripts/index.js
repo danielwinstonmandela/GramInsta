@@ -8,6 +8,7 @@ import 'leaflet/dist/leaflet.css';
 import App from './pages/app';
 import Camera from './utils/camera';
 import { registerServiceWorker } from './utils';
+import { getAccessToken } from './utils/auth';
 
 document.addEventListener('DOMContentLoaded', async () => {
   const app = new App({
@@ -20,6 +21,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   await registerServiceWorker();
   console.log('Service worker successfully registered.');
+
+  // Listen for service worker messages (for token requests)
+  navigator.serviceWorker.addEventListener('message', (event) => {
+    if (event.data && event.data.type === 'GET_TOKEN') {
+      const token = getAccessToken();
+      event.ports[0].postMessage({ token });
+    }
+  });
 
   window.addEventListener('hashchange', async () => {
     await app.renderPage();

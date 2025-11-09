@@ -357,13 +357,20 @@ export default class NewPage {
     if (existingSuccess) existingSuccess.remove();
   }
 
-  storeSuccessfully(message) {
+  storeSuccessfully(message, isOffline = false) {
     this.#showSuccess(message || 'Story created successfully! Redirecting to home page...');
     this.clearForm();
 
-    setTimeout(() => {
-      location.hash = '/';
-    }, 1500);
+    // If offline, don't redirect immediately
+    if (isOffline) {
+      setTimeout(() => {
+        this.#clearMessages();
+      }, 5000);
+    } else {
+      setTimeout(() => {
+        location.hash = '/';
+      }, 1500);
+    }
   }
 
   storeFailed(message) {

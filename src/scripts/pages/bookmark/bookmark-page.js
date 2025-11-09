@@ -11,6 +11,7 @@ import { storyMapper } from '../../data/api-mapper';
 export default class BookmarkPage {
   #map = null;
   #allStories = [];
+  #pendingCount = 0;
 
   async render() {
     return `
@@ -23,6 +24,12 @@ export default class BookmarkPage {
 
       <section class="container">
         <h1 class="section-title">Saved Stories</h1>
+        
+        <div id="pending-stories-banner" class="pending-stories-banner" style="display: none;">
+          <span class="pending-icon">📡</span>
+          <span id="pending-count">0</span> story(ies) pending sync. 
+          <span class="pending-info">Will sync automatically when online.</span>
+        </div>
         
         <div class="stories-list__filter-container">
           <input 
@@ -48,6 +55,7 @@ export default class BookmarkPage {
   }
 
   async afterRender() {
+    await this.#showPendingStoriesCount();
     await this.#showStoriesListMap();
     await this.#initialGalleryAndMap();
     this.#setupFilters();
@@ -61,6 +69,25 @@ export default class BookmarkPage {
       console.error('showStoriesListMap: error:', error);
     } finally {
       this.hideMapLoading();
+    }
+  }
+
+  async #showPendingStoriesCount() {
+    try {
+      const count = await Database.getPendingStoriesCount();
+      this.#pendingCount = count;
+
+      const banner = document.getElementById('pending-stories-banner');
+      const countElement = document.getElementById('pending-count');
+
+      if (count > 0) {
+        banner.style.display = 'flex';
+        countElement.textContent = count;
+      } else {
+        banner.style.display = 'none';
+      }
+    } catch (error) {
+      console.error('Error getting pending stories count:', error);
     }
   }
 

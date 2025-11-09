@@ -1087,6 +1087,57 @@ footer {
   font-size: 1.1rem;
 }
 
+/* Pending Stories Banner */
+.pending-stories-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  margin-bottom: 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 8px;
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+  }
+  50% {
+    box-shadow: 0 2px 16px rgba(102, 126, 234, 0.6);
+  }
+}
+
+.pending-stories-banner .pending-icon {
+  font-size: 1.2rem;
+  animation: rotate 3s linear infinite;
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.pending-stories-banner #pending-count {
+  font-weight: 700;
+  font-size: 1.1rem;
+  padding: 2px 8px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+}
+
+.pending-stories-banner .pending-info {
+  font-size: 13px;
+  opacity: 0.9;
+}
 
 @keyframes fade-in {
   from {
